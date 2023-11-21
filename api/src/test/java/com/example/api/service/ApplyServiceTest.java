@@ -54,4 +54,9 @@ class ApplyServiceTest {
 
     }
 
+    @Test
+    public void 카프카테스트(){
+        applyService.apply(10L);
+    }
+
 }
