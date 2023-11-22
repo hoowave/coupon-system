@@ -47,6 +47,8 @@ class ApplyServiceTest {
         }
 
         latch.await();
+
+        Thread.sleep(10000);
         // 2개 이상의 Thread가 공유 자원에 엑세스를 하고 작업을 하려고 할 때 발생되는
         // 문제점을 레이스 컨디션이라고 함
         long count = couponRepository.count();
@@ -55,8 +57,28 @@ class ApplyServiceTest {
     }
 
     @Test
-    public void 카프카테스트(){
-        applyService.apply(10L);
-    }
+    public void 한명당_한개의쿠폰만_발급() throws InterruptedException {
+        int threadCount = 1000;
+        // 동시에 접근하기 위해
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
 
+        for (int i = 0; i < threadCount; i++) {
+            long userId = i;
+            executorService.submit(() -> {
+                try {
+                    applyService.apply(1L);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        Thread.sleep(10000);
+        long count = couponRepository.count();
+        assertThat(count).isEqualTo(1);
+
+    }
 }
